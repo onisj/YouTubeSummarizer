@@ -6,4 +6,4 @@ def get_video_transcript(video_id: str) -> str:
         transcript = YouTubeTranscriptApi.get_transcript(video_id)
         return " ".join([entry["text"] for entry in transcript])
     except Exception as e:
-        raise HTTPException(status_code=404, detail=f"Transcript unavailable: {str(e)}")
+        return "Transcript unavailable. Generating summary from video title instead."

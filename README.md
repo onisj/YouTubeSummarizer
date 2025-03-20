@@ -27,7 +27,9 @@ YouTubeSummarizer/
 │   ├── video_search.py     # Video search logic
 │   ├── transcript.py       # Transcript extraction
 │   ├── summarizer.py       # Summarization and sentiment
+│   ├── speech_to_text.py   # Speech-to-text
 │   └── text_to_speech.py   # Text-to-speech
+
 ├── static/
 │   └── summary.mp3         # Generated audio
 └── README.md               # Project docs

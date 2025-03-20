@@ -5,101 +5,190 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YouTube Video Summarizer</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; max-width: 800px; margin: 0 auto; background-color: #f4f4f4; }
-        h1 { color: #2c3e50; text-align: center; }
-        .input-container { margin-bottom: 20px; text-align: center; }
-        input[type="text"] { width: 60%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
-        button { padding: 10px 20px; background-color: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        button:hover { background-color: #2980b9; }
-        button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
-        #result { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        #result h2 { color: #e74c3c; margin-top: 0; }
-        #result p { margin: 10px 0; line-height: 1.6; }
-        #result a { color: #3498db; text-decoration: none; }
-        #result a:hover { text-decoration: underline; }
-        .error { color: #e74c3c; font-weight: bold; }
-        .loading { color: #7f8c8d; font-style: italic; }
-        audio { width: 100%; margin-top: 10px; }
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 600px;
+            text-align: center;
+        }
+        input[type="text"] {
+            width: 70%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            position: relative;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #mic-button {
+            background-color: #FF5733;
+            position: absolute;
+            top: -40px;
+            right: 0;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        #mic-button.recording {
+            background-color: #C70039;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(199, 0, 57, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(199, 0, 57, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(199, 0, 57, 0); }
+        }
+        #result {
+            margin-top: 20px;
+            text-align: left;
+        }
+        audio {
+            margin-top: 10px;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
-    <h1>YouTube Video Summarizer</h1>
-    <div class="input-container">
-        <input type="text" id="query" placeholder="Enter video title or search prompt (e.g., 'Love in Every Word by Omoni Oboli')">
-        <button id="summarize-btn" onclick="summarizeVideo()">Summarize</button>
-    </div>
-    <div id="result">
-        <h2>Video Summary</h2>
-        <p><strong>Title:</strong> <span id="title"></span></p>
-        <p><strong>Channel:</strong> <span id="channel"></span></p>
-        <p><strong>Link:</strong> <a id="video-url" href="#" target="_blank"></a></p>
-        <p><strong>Summary:</strong> <span id="summary"></span></p>
-        <p><strong>Sentiment:</strong> <span id="sentiment"></span></p>
-        <p><strong>Key Themes:</strong> <span id="themes"></span></p>
-        <p><strong>Audio Summary:</strong></p>
-        <audio id="audio" controls src=""></audio>
-        <p id="error" class="error"></p>
-        <p id="loading" class="loading"></p>
+    <div class="container">
+        <h1>YouTube Video Summarizer</h1>
+        <input type="text" id="query" placeholder="Enter or speak video title">
+        <div class="button-container">
+            <button id="summarize">Summarize</button>
+            <button id="mic-button" title="Speak your prompt">🎙️</button>
+        </div>
+        <div id="result"></div>
     </div>
 
     <script>
-        async function summarizeVideo() {
-            const summarizeBtn = document.getElementById('summarize-btn');
-            const loading = document.getElementById('loading');
-            const title = document.getElementById('title');
-            const channel = document.getElementById('channel');
-            const videoUrl = document.getElementById('video-url');
-            const summary = document.getElementById('summary');
-            const sentiment = document.getElementById('sentiment');
-            const themes = document.getElementById('themes');
-            const audio = document.getElementById('audio');
-            const error = document.getElementById('error');
+        const queryInput = document.getElementById('query');
+        const summarizeButton = document.getElementById('summarize');
+        const micButton = document.getElementById('mic-button');
+        const resultDiv = document.getElementById('result');
 
-            title.innerText = '';
-            channel.innerText = '';
-            videoUrl.innerText = '';
-            videoUrl.href = '#';
-            summary.innerText = '';
-            sentiment.innerText = '';
-            themes.innerText = '';
-            audio.src = '';
-            error.innerText = '';
-            loading.innerText = 'Processing your request...';
-
-            const query = document.getElementById('query').value;
+        // Function to fetch summary
+        async function fetchSummary(query) {
             if (!query) {
-                error.innerText = 'Please enter a video title or prompt.';
-                loading.innerText = '';
+                resultDiv.innerHTML = '<p>Please enter or speak a video title or prompt.</p>';
                 return;
             }
 
-            summarizeBtn.disabled = true;
-            summarizeBtn.innerText = 'Summarizing...';
-
+            resultDiv.innerHTML = '<p>Loading...</p>';
             try {
                 const response = await fetch(`/summarize/?query=${encodeURIComponent(query)}&tts=true`);
-                if (!response.ok) throw new Error(`API request failed: ${response.status}`);
                 const data = await response.json();
 
                 if (data.error) {
-                    error.innerText = data.error;
+                    resultDiv.innerHTML = `<p>Error: ${data.error}</p>`;
                 } else {
-                    title.innerText = data.title || 'N/A';
-                    channel.innerText = data.channel || 'N/A';
-                    videoUrl.innerText = data.link || 'N/A';
-                    videoUrl.href = data.link || '#';
-                    summary.innerText = data.summary || 'No summary available.';
-                    sentiment.innerText = data.sentiment || 'N/A';
-                    themes.innerText = data.key_themes || 'N/A';
-                    audio.src = data.audio ? `${data.audio}?t=${Date.now()}` : '';
+                    resultDiv.innerHTML = `
+                        <p><strong>Title:</strong> ${data.title}</p>
+                        <p><strong>Channel:</strong> ${data.channel || 'N/A'}</p>
+                        <p><strong>Link:</strong> <a href="${data.link}" target="_blank">${data.link}</a></p>
+                        <p><strong>Summary:</strong> ${data.summary}</p>
+                        <p><strong>Sentiment:</strong> ${data.sentiment}</p>
+                        <p><strong>Key Themes:</strong> ${data.key_themes}</p>
+                        ${data.audio ? `<p><strong>Audio:</strong> <audio controls src="${data.audio}"></audio></p>` : '<p><strong>Audio:</strong> Not available</p>'}
+                    `;
                 }
-            } catch (err) {
-                error.innerText = `Error: ${err.message}`;
-            } finally {
-                summarizeBtn.disabled = false;
-                summarizeBtn.innerText = 'Summarize';
-                loading.innerText = '';
+            } catch (error) {
+                resultDiv.innerHTML = `<p>Failed to fetch summary: ${error.message}</p>`;
             }
+        }
+
+        // Summarize button event listener
+        summarizeButton.addEventListener('click', () => {
+            const query = queryInput.value.trim();
+            fetchSummary(query);
+        });
+
+        // Speech-to-text service integration
+        let mediaRecorder;
+        let audioChunks = [];
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            micButton.style.display = 'none';
+            console.log("MediaRecorder not supported in this browser.");
+        } else {
+            micButton.addEventListener('click', async () => {
+                if (!micButton.classList.contains('recording')) {
+                    // Start recording
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = (event) => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = async () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        const formData = new FormData();
+                        formData.append('file', audioBlob, 'speech.wav');
+
+                        // Send audio to server
+                        try {
+                            const response = await fetch('/speech-to-text/', {
+                                method: 'POST',
+                                body: formData
+                            });
+                            const data = await response.json();
+
+                            if (data.error) {
+                                resultDiv.innerHTML = `<p>Error: ${data.error}</p>`;
+                            } else {
+                                queryInput.value = data.text;
+                                fetchSummary(data.text);  // Trigger summarization with transcribed text
+                            }
+                        } catch (error) {
+                            resultDiv.innerHTML = `<p>Failed to process speech: ${error.message}</p>`;
+                        }
+
+                        micButton.classList.remove('recording');
+                        micButton.textContent = '🎙️';
+                        stream.getTracks().forEach(track => track.stop());
+                    };
+
+                    mediaRecorder.start();
+                    micButton.classList.add('recording');
+                    micButton.textContent = '🎙️';
+                } else {
+                    // Stop recording
+                    mediaRecorder.stop();
+                }
+            });
         }
     </script>
 </body>
