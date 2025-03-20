@@ -156,27 +156,27 @@ async def summarize_video(query: str = Query(..., min_length=1, description="Vid
                     messages.append({"role": "user", "content": f"Extract transcript for video ID: {video_id}"})
 
                 elif func_name == "get_video_transcript":
-                    transcript = get_video_transcript(args["video_id"])
-                    messages.append({"role": "assistant", "content": f"Transcript: {transcript[:6000]}"})
+                    transcript, language = get_video_transcript(args["video_id"])
+                    messages.append({"role": "assistant", "content": f"Transcript: {transcript[:6000]} (Language: {language})"})
                     if "Transcript error" in transcript:
                         messages.append({"role": "user", "content": f"Transcript is unavailable. Generate a summary using only the title: '{result['title']}'"})
                     else:
-                        messages.append({"role": "user", "content": f"Generate summary and themes from this video with title '{result['title']}'"})
+                        messages.append({"role": "user", "content": f"Generate summary and themes from this video with title '{result['title']}' in language '{language}'"})
 
                 elif func_name == "generate_summary_and_themes":
-                    summary_data = generate_summary_and_themes(args.get("text", ""), args.get("title", ""))
+                    summary_data = generate_summary_and_themes(args.get("text", ""), args.get("title", ""), language=args.get("language", "en"))
                     result["summary"] = summary_data["summary"]
                     result["sentiment"] = summary_data["sentiment"]
                     result["key_themes"] = summary_data["key_themes"]
                     if tts:
-                        audio_path = text_to_speech(summary_data["summary"])
+                        audio_path = text_to_speech(summary_data["summary"], language=summary_data["language"])
                         logger.info(f"Assigned audio path: {audio_path}")
                         result["audio"] = audio_path if audio_path else "/static/summary.mp3"
                     if result["summary"]:
                         return VideoSummaryResponse(**result)
 
                 elif func_name == "text_to_speech":
-                    audio_path = text_to_speech(result["summary"])
+                    audio_path = text_to_speech(result["summary"], language="en")  # Fallback to English if not specified
                     logger.info(f"Assigned audio path: {audio_path}")
                     result["audio"] = audio_path if audio_path else "/static/summary.mp3"
                     if result["summary"]:
