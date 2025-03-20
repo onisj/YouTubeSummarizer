@@ -1,0 +1,59 @@
+# Byte-compiled / compiled Python files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+.venv/
+.venv/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Logs and databases
+*.log
+*.sqlite3
+*.db
+
+# Environment variables and secrets
+.env
+*.key
+*.pem
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Pytest and testing files
+.coverage
+.tox/
+.nox/
+pytest_cache/
+
+# MyPy cache
+.mypy_cache/
+
+# Cython compiled files
+*.so
+
+# macOS system files
+.DS_Store
+
+# IDE / Editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# FastAPI static files
+static/
+media/
+
+# Ignore compiled Python files and cache
+*.pyo
+
+
+Week5.ipynb

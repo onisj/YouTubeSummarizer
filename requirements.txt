@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+google-search-results
+youtube_transcript_api
+gtts
+transformers
+torch
+python-dotenv

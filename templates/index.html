@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Video Summarizer</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; max-width: 800px; margin: 0 auto; background-color: #f4f4f4; }
+        h1 { color: #2c3e50; text-align: center; }
+        .input-container { margin-bottom: 20px; text-align: center; }
+        input[type="text"] { width: 60%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px 20px; background-color: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #2980b9; }
+        button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+        #result { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        #result h2 { color: #e74c3c; margin-top: 0; }
+        #result p { margin: 10px 0; line-height: 1.6; }
+        #result a { color: #3498db; text-decoration: none; }
+        #result a:hover { text-decoration: underline; }
+        .error { color: #e74c3c; font-weight: bold; }
+        .loading { color: #7f8c8d; font-style: italic; }
+        audio { width: 100%; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>YouTube Video Summarizer</h1>
+    <div class="input-container">
+        <input type="text" id="query" placeholder="Enter video title or search prompt (e.g., 'Love in Every Word by Omoni Oboli')">
+        <button id="summarize-btn" onclick="summarizeVideo()">Summarize</button>
+    </div>
+    <div id="result">
+        <h2>Video Summary</h2>
+        <p><strong>Title:</strong> <span id="title"></span></p>
+        <p><strong>Channel:</strong> <span id="channel"></span></p>
+        <p><strong>Link:</strong> <a id="video-url" href="#" target="_blank"></a></p>
+        <p><strong>Summary:</strong> <span id="summary"></span></p>
+        <p><strong>Sentiment:</strong> <span id="sentiment"></span></p>
+        <p><strong>Key Themes:</strong> <span id="themes"></span></p>
+        <p><strong>Audio Summary:</strong></p>
+        <audio id="audio" controls src=""></audio>
+        <p id="error" class="error"></p>
+        <p id="loading" class="loading"></p>
+    </div>
+
+    <script>
+        async function summarizeVideo() {
+            const summarizeBtn = document.getElementById('summarize-btn');
+            const loading = document.getElementById('loading');
+            const title = document.getElementById('title');
+            const channel = document.getElementById('channel');
+            const videoUrl = document.getElementById('video-url');
+            const summary = document.getElementById('summary');
+            const sentiment = document.getElementById('sentiment');
+            const themes = document.getElementById('themes');
+            const audio = document.getElementById('audio');
+            const error = document.getElementById('error');
+
+            title.innerText = '';
+            channel.innerText = '';
+            videoUrl.innerText = '';
+            videoUrl.href = '#';
+            summary.innerText = '';
+            sentiment.innerText = '';
+            themes.innerText = '';
+            audio.src = '';
+            error.innerText = '';
+            loading.innerText = 'Processing your request...';
+
+            const query = document.getElementById('query').value;
+            if (!query) {
+                error.innerText = 'Please enter a video title or prompt.';
+                loading.innerText = '';
+                return;
+            }
+
+            summarizeBtn.disabled = true;
+            summarizeBtn.innerText = 'Summarizing...';
+
+            try {
+                const response = await fetch(`/summarize/?query=${encodeURIComponent(query)}&tts=true`);
+                if (!response.ok) throw new Error(`API request failed: ${response.status}`);
+                const data = await response.json();
+
+                if (data.error) {
+                    error.innerText = data.error;
+                } else {
+                    title.innerText = data.title || 'N/A';
+                    channel.innerText = data.channel || 'N/A';
+                    videoUrl.innerText = data.link || 'N/A';
+                    videoUrl.href = data.link || '#';
+                    summary.innerText = data.summary || 'No summary available.';
+                    sentiment.innerText = data.sentiment || 'N/A';
+                    themes.innerText = data.key_themes || 'N/A';
+                    audio.src = data.audio ? `${data.audio}?t=${Date.now()}` : '';
+                }
+            } catch (err) {
+                error.innerText = `Error: ${err.message}`;
+            } finally {
+                summarizeBtn.disabled = false;
+                summarizeBtn.innerText = 'Summarize';
+                loading.innerText = '';
+            }
+        }
+    </script>
+</body>
+</html>
